@@ -1,0 +1,115 @@
+# For this project, I downloaded Spotify data 
+# Then I created a table to insert Spotify data into.
+# Finally, I performed analytics on the data using SQL. 
+
+#Creating the table: 
+CREATE TABLE BIT_DB.Spotifydata (
+id integer PRIMARY KEY,
+artist_name varchar NOT NULL,
+track_name varchar NOT NULL,
+track_id varchar NOT NULL,
+popularity integer NOT NULL,
+danceability decimal(4,3) NOT NULL,
+energy decimal(4,3) NOT NULL,
+key integer NOT NULL,
+loudness decimal(5,3) NOT NULL,
+mode integer NOT NULL,
+speechiness decimal(5,4) NOT NULL,
+acousticness decimal(6,5) NOT NULL,
+instrumentalness text NOT NULL,
+liveness decimal(5,4) NOT NULL,
+valence decimal(4,3) NOT NULL,
+tempo decimal(6,3) NOT NULL,
+duration_ms integer NOT NULL,
+time_signature integer NOT NULL 
+)
+
+#Then I inserted the Spotify Data .csv into the table.
+
+#Next, I explored the data and created my own question to answer. My work is down below
+
+
+
+--# What are the top 10 popular songs in the Spotifydata? Order by popularity and display the track name and artist.
+SELECT track_name
+, artist_name
+,popularity AS TOP_10_LIST
+FROM BIT_DB.Spotifydata
+ORDER BY popularity desc
+limit 10
+;
+
+--# What is the average tempo of the top 10 most popular songs?
+
+SELECT AVG( tempo)
+FROM BIT_DB.Spotifydata
+WHERE tempo IN(SELECT tempo FROM BIT_DB.Spotifydata
+ORDER BY popularity desc
+limit 10)
+;
+
+
+
+--# Which song has the highest danceability score, and who is the artist?
+
+SELECT MAX(danceability) AS highest_danceability_score
+,track_name
+,artist_name
+FROM BIT_DB.Spotifydata
+ORDER BY danceability desc
+Limit 1;
+
+
+--# List all the songs that are longer than 4 minutes and have an energy score above 0.75
+
+SELECT track_name
+, duration_ms/60000.0 AS duration_minutes
+,energy
+FROM BIT_DB.Spotifydata
+WHERE duration_ms/60000.0> 4
+AND energy>.75
+ORDER BY duration_minutes
+;
+
+
+--# How many songs have a popularity score above 85 and speechiness score below 0.05?
+
+SELECT COUNT(popularity) AS popularity_score
+,speechiness
+FROM BIT_DB.Spotifydata
+WHERE popularity >85
+AND speechiness < 0.05
+;
+
+--# Which artist appears most frequently in the dataset, and how many times do they appear?
+
+SELECT COUNT(artist_name) AS most_frequent_artist
+,artist_name
+FROM BIT_DB.Spotifydata
+GROUP BY artist_name
+ORDER BY most_frequent_artist desc
+;
+
+--#  Which artist has the highest average energy score across all their songs, and what is that average? Only consider artists who appear at least twice in the dataset
+
+SELECT artist_name
+,AVG(energy) AS highest_avg_energy
+FROM BIT_DB.Spotifydata
+GROUP BY artist_name
+HAVING COUNT(artist_name)>=2
+ORDER BY highest_avg_energy DESC
+LIMIT 1
+;
+
+
+
+
+
+
+
+
+
+
+
+
+
