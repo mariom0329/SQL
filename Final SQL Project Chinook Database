@@ -1,0 +1,241 @@
+-- CHINOOK DATA ANALYSIS 
+--For this project I performed an analysis of a database called chinook. My questions and answers are listed below. 
+
+--1.Show Customers (their full names, customer ID, and country) who are not in the US. 
+
+SELECT FirstName, LastName, CustomerId ,Country
+FROM customers
+WHERE Country<>'USA'
+;
+
+
+
+--2. Show only the Customers from Brazil.
+
+SELECT *
+FROM customers
+WHERE Country= 'Brazil'
+;
+
+
+
+--3. Find the Invoices of customers who are from Brazil. The resulting table should show the customer's full name, Invoice ID, Date of the invoice, and billing country.
+
+SELECT FirstName, LastName, InvoiceId, InvoiceDate,BillingCountry
+FROM customers
+INNER JOIN invoices
+ON customers.CustomerId=invoices.CustomerId
+WHERE Country='Brazil'
+;
+
+--4.Show the Employees who are Sales Agents.
+
+SELECT * 
+FROM chinook.Employees
+WHERE Title = 'Sales Support Agent' ;
+
+
+
+
+--5. Find a unique/distinct list of billing countries from the Invoice table.
+
+SELECT DISTINCT BillingCountry
+FROM chinook.invoices
+;
+
+
+--6. Provide a query that shows the invoices associated with each sales agent. The resulting table should include the Sales Agent's full name.
+
+SELECT  emp.FirstName || ' ' || emp.LastName AS SalesAgentName 
+,emp.EmployeeId 
+ ,inv.InvoiceId
+FROM employees as emp
+
+JOIN customers as cust
+ON emp.EmployeeId= cust.SupportRepId
+
+JOIN invoices as inv
+ON cust.CustomerId=inv.CustomerId
+
+WHERE Title = 'Sales Support Agent'
+;
+
+
+--7. Show the Invoice Total, Customer name, Country, and Sales Agent name for all invoices and customers.
+-- my first solution I wanted to calculate if the total column didnt exist. The cleaner solution is below the first. 
+
+SELECT cust.FirstName ||' '|| cust.LastName AS Customer_Name
+,cust.Country
+,emp.FirstName||' '|| emp.LastName AS SalesAgentName
+FROM chinook.employees AS emp
+
+JOIN chinook.customers AS cust
+ON emp.EmployeeId=cust.SupportRepId
+
+JOIN chinook.invoices as inv
+On cust.CustomerId=inv.CustomerId
+
+JOIN chinook.invoice_items as invi
+ON inv.InvoiceId=invi.InvoiceId
+GROUP BY inv.InvoiceId, cust.FirstName, 
+cust.LastName, cust.Country, 
+emp.FirstName,  emp.LastName
+;
+
+SELECT emp.LastName, emp.FirstName, cust.FirstName, cust.LastName, cust.Country, inv.Total
+FROM chinook.employees emp 
+JOIN chinook.customers cust ON cust.SupportRepId = emp.EmployeeId
+JOIN chinook.invoices inv ON inv.CustomerId = cust.CustomerId;
+
+
+--8. How many Invoices were there in 2009?
+
+SELECT  COUNT(InvoiceId) AS Total_Invoices_2009
+FROM chinook.invoices
+WHERE InvoiceDate BETWEEN '2009-01-01' AND '2009-12-31';
+
+
+--9. What are the total sales for 2009?
+
+SELECT SUM(Total) AS Total_Sales
+FROM chinook.invoices
+WHERE InvoiceDate BETWEEN '2009-01-01' AND '2009-12-31';
+
+
+--10. Write a query that includes the purchased track name with each invoice line ID.
+
+SELECT trk.Name AS Track_name
+,invi.InvoiceLineId
+FROM chinook.tracks AS trk
+
+JOIN chinook.invoice_items AS invi
+ON trk.TrackId=invi.TrackId
+;
+
+
+--11. Write a query that includes the purchased track name AND artist name with each invoice line ID.
+
+SELECT trk.Name AS Track_name
+,art.Name AS Artist_name
+,InvoiceLineId
+FROM chinook.tracks AS trk
+
+JOIN chinook.albums as alb
+ON trk.AlbumId=alb.AlbumId
+
+JOIN chinook.artists AS art
+ON alb.ArtistId=art.ArtistId
+
+JOIN chinook.invoice_items AS invi
+ON trk.TrackId=invi.TrackId
+;
+
+
+
+--12. Provide a query that shows all the Tracks, and include the Album name, Media type, and Genre.
+
+SELECT trk.Name AS Tracks
+,alb.Title AS Album_name
+,med.Name AS Media_type
+,gen.Name AS Genre
+ FROM chinook.tracks AS trk
+
+JOIN chinook.media_types AS med
+ON trk.MediaTypeId=med.MediaTypeId
+
+JOIN chinook.albums AS alb
+ON trk.AlbumId=alb.AlbumId
+
+JOIN chinook.genres AS gen
+ON trk.GenreId=gen.GenreId
+;
+
+
+--13. Show the total sales made by each sales agent.
+
+SELECT SUM(inv.Total) AS Sales_by_agent
+,emp.FirstName, emp.LastName
+FROM chinook.invoices AS inv
+
+JOIN chinook.customers AS cust
+ON inv.CustomerId=cust.CustomerId
+
+JOIN chinook.employees AS emp
+ON cust.SupportRepId=emp.EmployeeId
+WHERE emp.Title='Sales Support Agent'
+GROUP BY emp.FirstName, emp.LastName;
+
+
+--14. Which sales agent made the most dollars in sales in 2009?
+
+SELECT SUM(inv.Total) AS Sale_by_agent
+,emp.FirstName, emp.LastName
+FROM chinook.invoices AS inv
+
+JOIN chinook.customers AS cust
+ON inv.CustomerId=cust.CustomerId
+
+JOIN chinook.employees AS emp
+ON cust.SupportRepId=emp.EmployeeId
+WHERE emp.Title='Sales Support Agent'
+AND inv.InvoiceDate BETWEEN '2009-01-01' AND '2009-12-31'
+GROUP BY emp.FirstName, emp.LastName
+ORDER BY Sale_by_agent desc
+LIMIT 1;
+
+
+
+--15 Which genre has generated the most revenue from all invoices? Display the Genre Name and Total Sales.
+
+SELECT gen.Name AS max_generated_genre
+,SUM(invi.UnitPrice * invi.Quantity) AS Total_sales
+FROM chinook.genres AS gen
+
+JOIN chinook.tracks AS trk
+ON gen.GenreId=trk.GenreId
+
+JOIN chinook.invoice_items AS invi
+ON trk.TrackId=invi.TrackId
+
+JOIN chinook.invoices AS inv
+ON invi.InvoiceId=inv.InvoiceId
+
+GROUP BY gen.Name 
+ORDER BY Total_Sales DESC
+LIMIT 1;
+
+
+--16 Which album contains the highest number of purchased tracks? Display the Album Title and the Number of Tracks Sold.
+
+SELECT alb.Title AS Album_Title
+,COUNT(invi.InvoiceLineId) AS Tracks_sold
+FROM chinook.albums AS alb
+
+JOIN chinook.tracks AS trk
+ON alb.AlbumId=trk.AlbumId
+
+JOIN chinook.invoice_items AS invi
+ON trk.TrackId=invi.TrackId 
+GROUP BY alb.Title 
+ORDER BY Tracks_sold DESC
+LIMIT 1;
+
+
+--17 For each customer, show their full name, country, and the number of invoices they made in 2009. 
+--Only include customers who made at least 1 purchase in 2009.
+
+SELECT cust.FirstName || ' '||cust.LastName AS Customer_Full_Name
+,cust.Country
+,COUNT(inv.CustomerId) AS Number_of_Invoices
+FROM chinook.customers AS cust
+
+JOIN chinook.invoices as inv
+ON cust.CustomerId=inv.CustomerId
+
+WHERE inv.Total>1
+AND inv.InvoiceDate BETWEEN '2009-01-01' AND '2009-12-31'
+GROUP BY cust.CustomerId
+;
+
+
+ 
